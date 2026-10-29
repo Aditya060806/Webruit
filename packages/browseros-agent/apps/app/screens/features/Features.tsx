@@ -10,9 +10,7 @@ import {
   SplitSquareHorizontal,
 } from 'lucide-react'
 import { type FC, useEffect, useState } from 'react'
-import DiscordLogo from '@/assets/discord-logo.svg'
 import GithubLogo from '@/assets/github-logo.svg'
-import SlackLogo from '@/assets/slack-logo.svg'
 import { PillIndicator } from '@/components/elements/pill-indicator'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,12 +21,7 @@ import {
   MCP_SERVER_DEMO_URL,
   SPLIT_VIEW_GIF_URL,
 } from '@/lib/constants/mediaUrls'
-import {
-  discordUrl,
-  docsUrl,
-  productRepositoryUrl,
-  slackUrl,
-} from '@/lib/constants/productUrls'
+import { docsUrl, productRepositoryUrl } from '@/lib/constants/productUrls'
 import { cn } from '@/lib/utils'
 import { BentoCard, type Feature } from './BentoCard'
 import { VideoFrame } from './VideoFrame'
@@ -278,54 +271,6 @@ export const FeaturesPage: FC = () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Discord */}
-            <a
-              href={discordUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="community-card group flex items-start gap-4 rounded-xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:border-[var(--accent-orange)]/50 hover:bg-card/80 hover:shadow-[var(--accent-orange)]/5 hover:shadow-lg"
-            >
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg transition-all group-hover:scale-110">
-                <img
-                  src={DiscordLogo}
-                  className="h-full w-full"
-                  alt="discord-logo"
-                />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-semibold text-lg transition-colors group-hover:text-[var(--accent-orange)]">
-                  Join Discord
-                </h3>
-                <p className="text-muted-foreground text-sm">
-                  To suggest features / provide feedback
-                </p>
-              </div>
-            </a>
-
-            {/* Slack */}
-            <a
-              href={slackUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="community-card group flex items-start gap-4 rounded-xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:border-[var(--accent-orange)]/50 hover:bg-card/80 hover:shadow-[var(--accent-orange)]/5 hover:shadow-lg"
-            >
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg transition-all group-hover:scale-110">
-                <img
-                  src={SlackLogo}
-                  className="h-full w-full"
-                  alt="slack-logo"
-                />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-semibold text-lg transition-colors group-hover:text-[var(--accent-orange)]">
-                  Join Slack
-                </h3>
-                <p className="text-muted-foreground text-sm">
-                  To suggest features / provide feedback
-                </p>
-              </div>
-            </a>
-
             {/* GitHub */}
             <a
               href={productRepositoryUrl}

@@ -12,6 +12,7 @@ import type { FC } from 'react'
 import { NavLink } from 'react-router'
 import { ThemeToggle } from '@/components/elements/theme-toggle'
 import type { Feature } from '@/lib/browseros/capabilities'
+import { docsUrl } from '@/lib/constants/productUrls'
 import { cn } from '@/lib/utils'
 import { useCapabilities } from '@/modules/browseros/capabilities.hooks'
 
@@ -80,7 +81,7 @@ const primarySettingsSections: NavSection[] = [
 ]
 
 const helpItems: NavItem[] = [
-  { name: 'Docs', href: 'https://docs.browseros.com/', icon: BookOpen },
+  { name: 'Docs', href: docsUrl, icon: BookOpen },
   { name: 'Features', to: '/features', icon: Compass },
   { name: 'Diagnostics', to: '/settings/diagnostics', icon: Activity },
 ]
