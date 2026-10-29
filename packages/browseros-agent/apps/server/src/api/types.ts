@@ -52,6 +52,8 @@ const ChatInputSchema = z.object({
   contextWindowSize: z.number().optional(),
   browserContext: BrowserContextSchema.optional(),
   userSystemPrompt: z.string().optional(),
+  /** Webruit companion id. Unknown ids fall back to the default companion rather than failing the turn. */
+  companionId: z.string().max(64).optional(),
   isScheduledTask: z.boolean().optional().default(false),
   userWorkingDir: z.string().min(1).optional(),
   supportsImages: z.boolean().optional().default(true),

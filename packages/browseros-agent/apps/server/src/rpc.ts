@@ -1,4 +1,5 @@
 import type { createAgentRoutes } from './api/routes/agents'
+import type { createCompanionRoutes } from './api/routes/companions'
 import type { createConversationRoutes } from './api/routes/conversations'
 import type { createProvidersRoutes } from './api/routes/providers'
 import type { createScheduledJobRunRoutes } from './api/routes/scheduled-job-runs'
@@ -15,6 +16,7 @@ import type { createScheduledJobRoutes } from './api/routes/scheduled-jobs'
 // runtime, no wrapper) while tracking the route definitions automatically.
 export type ConversationRoutes = ReturnType<typeof createConversationRoutes>
 export type AgentRoutes = ReturnType<typeof createAgentRoutes>
+export type CompanionRoutes = ReturnType<typeof createCompanionRoutes>
 export type ProviderRoutes = ReturnType<typeof createProvidersRoutes>
 export type ScheduledJobRoutes = ReturnType<typeof createScheduledJobRoutes>
 export type ScheduledJobRunRoutes = ReturnType<

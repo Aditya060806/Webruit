@@ -19,6 +19,7 @@ import { requireTrustedAppOrigin } from '../utils/request-auth'
 import { createAcpxProbeRoutes } from './acpx-probe'
 import { createAgentRoutes } from './agents'
 import { createChatRoutes } from './chat'
+import { createCompanionRoutes } from './companions'
 import { createConversationRoutes } from './conversations'
 import { createHealthRoute } from './health'
 import { createKlavisRoutes } from './klavis'
@@ -134,6 +135,7 @@ export function createApiRoutes(deps: CreateApiRoutesDeps) {
       .use('/scheduled-job-runs/*', requireTrustedAppOrigin())
       .route('/acpx/probe', createAcpxProbeRoutes({ resourcesDir }))
       .route('/agents', resolvedAgentRoutes)
+      .route('/companions', createCompanionRoutes())
       .route('/conversations', createConversationRoutes())
       .route('/providers', createProvidersRoutes())
       .route('/test-provider', createProviderRoutes({ browserosId }))

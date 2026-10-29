@@ -33,6 +33,7 @@ import { stopAgentStorage } from '@/lib/stop-agent/stop-agent-storage'
 import { selectedWorkspaceStorage } from '@/lib/workspace/workspace-storage'
 import { resolveAgentServerUrl } from '@/modules/browseros/agent-server-url.helpers'
 import { useAgentServerUrl } from '@/modules/browseros/agent-server-url.hooks'
+import { selectedCompanionStorage } from '@/modules/companions/selected-companion-storage'
 import {
   fetchServerConversation,
   SERVER_CONVERSATIONS_QUERY_KEY,
@@ -442,6 +443,7 @@ export const useChatSession = (options?: ChatSessionOptions) => {
         })
 
         const declinedApps = await declinedAppsStorage.getValue()
+        const companionId = await selectedCompanionStorage.getValue()
         const persist = persistRef.current
         const previousMessages = messagesRef.current
         // When the server persists, it owns history and loads it itself, so
@@ -466,6 +468,7 @@ export const useChatSession = (options?: ChatSessionOptions) => {
           previousConversation,
           persist,
           declinedApps,
+          companionId,
           attachments: getLastUserMessageFiles(messages).map((file) => ({
             mediaType: file.mediaType,
             data: file.url,

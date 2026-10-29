@@ -1,5 +1,6 @@
 import { ArrowRight, Pencil, Sparkles } from 'lucide-react'
 import { type FC, useEffect, useRef, useState } from 'react'
+import { CompanionWelcome } from '@/components/companions/CompanionWelcome'
 import { sentry } from '@/lib/sentry/sentry'
 import { cn } from '@/lib/utils'
 import type { ChatMode } from '@/modules/chat/chat-types'
@@ -73,21 +74,23 @@ const ModeEmptyState: FC<ChatEmptyStateProps> = ({
         />
       ) : (
         <>
-          <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50">
-            <Sparkles className="h-7 w-7 text-[var(--accent-orange)]" />
-          </div>
-          <div>
-            <h2 className="mb-1 font-semibold text-lg">
-              {mode === 'chat'
-                ? 'Chat with this page'
-                : 'Agent at your service'}
-            </h2>
-            <p className="max-w-[230px] text-muted-foreground text-xs">
-              {mode === 'chat'
-                ? 'Ask questions about the current page or any topic'
-                : 'Let AI automate tasks and browse for you'}
-            </p>
-          </div>
+          {mode === 'agent' ? (
+            <CompanionWelcome onStarterClick={onSuggestionClick} />
+          ) : (
+            <>
+              <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50">
+                <Sparkles className="h-7 w-7 text-[var(--accent-orange)]" />
+              </div>
+              <div>
+                <h2 className="mb-1 font-semibold text-lg">
+                  Chat with this page
+                </h2>
+                <p className="max-w-[230px] text-muted-foreground text-xs">
+                  Ask questions about the current page or any topic
+                </p>
+              </div>
+            </>
+          )}
           <div className="group/prompts mt-6 flex w-full max-w-[320px] flex-col gap-2">
             {STARTER_PROMPT_SLOTS.map((slot) => (
               <button

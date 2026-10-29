@@ -11,6 +11,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { BRAND_MARKS } from '@/components/agents/agent-brand-marks'
 import { ChatProviderSelector } from '@/components/chat/ChatProviderSelector'
 import type { Provider } from '@/components/chat/chatComponentTypes'
+import { CompanionPicker } from '@/components/companions/CompanionPicker'
 import { ThemeToggle } from '@/components/elements/theme-toggle'
 import { productRepositoryUrl } from '@/lib/constants/productUrls'
 import { ProviderIcon } from '@/lib/llm-providers/providerIcons'
@@ -55,6 +56,11 @@ export const ChatHeader: FC<ChatHeaderProps> = ({
       )}
     >
       <div className="flex items-center gap-2">
+        {/* Avatar-only: the side panel is too narrow for two named selectors, and the empty state names the companion. */}
+        <CompanionPicker
+          compact
+          onCreate={() => window.open('/app.html#/companions?new=1', '_blank')}
+        />
         {/* Provider Selector */}
         <ChatProviderSelector
           providers={providers}
@@ -69,7 +75,7 @@ export const ChatHeader: FC<ChatHeaderProps> = ({
             <HeaderProviderIcon provider={selectedProvider} />
             <span
               className={cn(
-                'font-semibold text-base',
+                'max-w-[140px] truncate whitespace-nowrap font-semibold text-base',
                 !selectedProvider && 'text-muted-foreground',
               )}
             >

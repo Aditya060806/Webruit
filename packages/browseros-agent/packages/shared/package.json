@@ -58,6 +58,10 @@
       "types": "./src/schemas/llm.ts",
       "default": "./src/schemas/llm.ts"
     },
+    "./schemas/companion": {
+      "types": "./src/schemas/companion.ts",
+      "default": "./src/schemas/companion.ts"
+    },
     "./schemas/agent": {
       "types": "./src/schemas/agent.ts",
       "default": "./src/schemas/agent.ts"

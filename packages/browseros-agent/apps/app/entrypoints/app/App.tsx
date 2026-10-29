@@ -5,6 +5,7 @@ import { SettingsSidebarLayout } from '@/components/layout/SettingsSidebarLayout
 import { SidebarLayout } from '@/components/layout/SidebarLayout'
 import { AgentCommandHome } from '@/screens/agent-command/AgentCommandHome'
 import { AISettingsPage } from '@/screens/ai-settings/AISettingsPage'
+import { CompanionsPage } from '@/screens/companions/CompanionsPage'
 import { ConnectMCP } from '@/screens/connect-mcp/ConnectMCP'
 import { CustomizationPage } from '@/screens/customization/CustomizationPage'
 import { FeaturesPage } from '@/screens/features/Features'
@@ -59,6 +60,7 @@ export const App: FC = () => {
 
           <Route path="connect-apps" element={<ConnectMCP />} />
           <Route path="scheduled" element={<ScheduledTasksPage />} />
+          <Route path="companions" element={<CompanionsPage />} />
         </Route>
 
         <Route element={<SettingsSidebarLayout />}>

@@ -16,6 +16,11 @@
  * response style, and dynamic page context.
  */
 
+import {
+  type CompanionPromptInput,
+  renderCompanionSection,
+} from '../lib/companions/companion-prompt'
+
 // -----------------------------------------------------------------------------
 // section: role-and-mode
 // -----------------------------------------------------------------------------
@@ -45,6 +50,17 @@ You do not have a filesystem workspace in this session. Return all results direc
   }
 
   return `<role>\n${role}\n</role>`
+}
+
+// -----------------------------------------------------------------------------
+// section: companion (Webruit)
+// -----------------------------------------------------------------------------
+
+function getCompanion(
+  _exclude: Set<string>,
+  options?: BuildSystemPromptOptions,
+): string {
+  return options?.companion ? renderCompanionSection(options.companion) : ''
 }
 
 // -----------------------------------------------------------------------------
@@ -230,6 +246,7 @@ type PromptSectionFn = (
 
 const promptSections: Record<string, PromptSectionFn> = {
   'role-and-mode': getRoleAndMode,
+  companion: getCompanion,
   security: getSecurity,
   execution: getExecution,
   'external-integrations': getExternalIntegrations,
@@ -254,6 +271,8 @@ export interface BuildSystemPromptOptions {
   origin?: 'sidepanel' | 'newtab'
   /** Whether this prompt's tool set includes output-only filesystem_read. */
   generatedOutputReadAvailable?: boolean
+  /** Selected Webruit companion; adds the persona/limits section. */
+  companion?: CompanionPromptInput
 }
 
 export function buildSystemPrompt(options?: BuildSystemPromptOptions): string {

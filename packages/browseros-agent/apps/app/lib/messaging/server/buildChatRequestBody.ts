@@ -60,6 +60,8 @@ export interface ChatRequestBodyParams {
   /** Whether the conversation is written to the local database. */
   persist?: boolean
   declinedApps?: string[]
+  /** Webruit companion; the server falls back to the default when absent or unknown. */
+  companionId?: string
   selectedText?: string
   selectedTextSource?: {
     url: string
@@ -81,6 +83,7 @@ export const buildChatRequestBody = ({
   previousConversation,
   persist,
   declinedApps,
+  companionId,
   selectedText,
   selectedTextSource,
   isScheduledTask,
@@ -108,6 +111,7 @@ export const buildChatRequestBody = ({
   previousConversation,
   persist,
   declinedApps: declinedApps?.length ? declinedApps : undefined,
+  companionId,
   selectedText,
   selectedTextSource,
   isScheduledTask,

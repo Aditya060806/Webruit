@@ -35,6 +35,8 @@ import {
 import type { AcpAgentStore } from '../../lib/agents/storage/acp-agent-store'
 import { DbAcpAgentStore } from '../../lib/agents/storage/acp-agent-store'
 import { resolveLLMConfig } from '../../lib/clients/llm/config'
+import { companionSessionKey } from '../../lib/companions/companion-prompt'
+import { CompanionStore } from '../../lib/companions/companion-store'
 import {
   type ConversationStore,
   DbConversationStore,
@@ -85,6 +87,7 @@ export interface ChatServiceDeps {
 }
 
 export class ChatService {
+  private readonly companionStore = new CompanionStore()
   private acpAgentStore: Pick<AcpAgentStore, 'get'> | undefined
   private acpRuntime: Pick<AcpAgentRuntime, 'stream' | 'close'> | undefined
   private readonly acpMessages = new Map<string, UIMessage[]>()
@@ -196,6 +199,9 @@ export class ChatService {
 
     let session = sessionStore.get(request.conversationId)
 
+    const companion = await this.companionStore.resolve(request.companionId)
+    const companionKey = companionSessionKey(companion)
+
     const agentConfig: ResolvedAgentConfig = {
       conversationId: request.conversationId,
       provider: llmConfig.provider,
@@ -223,6 +229,7 @@ export class ChatService {
       origin: request.origin,
       declinedApps: request.declinedApps,
       browserosId: this.deps.browserosId,
+      companion,
     }
 
     let isNewSession = false
@@ -239,24 +246,30 @@ export class ChatService {
       mcpServerKey: session.mcpServerKey,
       workingDir: session.workingDir,
       chatMode: session.chatMode,
+      companionKey: session.companionKey,
     }
 
     const mcpChanged = !!prior && prior.mcpServerKey !== mcpServerKey
     const workspaceChanged =
       !!prior && prior.workingDir !== request.userWorkingDir
     const modeChanged = !!prior && prior.chatMode !== requestChatMode
+    const companionChanged = !!prior && prior.companionKey !== companionKey
 
     // One rebuild reflects every change, because rebuildSession reads the
     // current agentConfig, mcpServerKey, and request. Switching to chat mode
     // drops the agent's record of tool calls it already made
     // (sanitizeMessagesForToolset removes parts the narrower toolset lacks) and
     // switching back does not restore them.
-    if (session && (mcpChanged || workspaceChanged || modeChanged)) {
+    if (
+      session &&
+      (mcpChanged || workspaceChanged || modeChanged || companionChanged)
+    ) {
       logger.info('Rebuilding session for mid-conversation input changes', {
         conversationId: request.conversationId,
         mcpChanged,
         workspaceChanged,
         modeChanged,
+        companionChanged,
       })
       session = await this.rebuildSession(
         session,
@@ -284,6 +297,11 @@ export class ChatService {
     if (modeChanged) {
       contextChanges.push(
         describeModeChange(requestChatMode, !!request.userWorkingDir),
+      )
+    }
+    if (companionChanged) {
+      contextChanges.push(
+        `The user switched companions. You are now ${companion.name}; follow the updated <companion> section from here on.`,
       )
     }
 
@@ -353,6 +371,7 @@ export class ChatService {
         mcpServerKey,
         workingDir: request.userWorkingDir,
         chatMode: requestChatMode,
+        companionKey,
         outputFileAccess,
       }
       sessionStore.set(request.conversationId, session)
@@ -814,6 +833,7 @@ export class ChatService {
       mcpServerKey,
       workingDir: request.userWorkingDir,
       chatMode: agentConfig.chatMode ?? false,
+      companionKey: companionSessionKey(agentConfig.companion),
       outputFileAccess,
     }
     newSession.agent.messages = sanitizeMessagesForToolset(

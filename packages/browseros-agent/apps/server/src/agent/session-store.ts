@@ -25,6 +25,8 @@ export interface AgentSession {
    * the stamp at every construction site.
    */
   chatMode: boolean
+  /** Companion id + content hash when the session was created, for change detection. */
+  companionKey?: string
   /** Browser-generated output paths returned during this conversation. */
   outputFileAccess?: BrowserOutputFileAccess
 }

@@ -303,6 +303,7 @@ export class AiSdkAgent {
         declinedApps: config.resolvedConfig.declinedApps,
         origin: config.resolvedConfig.origin,
         generatedOutputReadAvailable: 'filesystem_read' in filesystemTools,
+        companion: config.resolvedConfig.companion,
       })
 
       // Configure compaction for context window management

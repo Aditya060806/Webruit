@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 import type { LLMProvider } from '@browseros/shared/schemas/llm'
+import type { CompanionPromptInput } from '../lib/companions/companion-prompt'
 
 export interface ProviderConfig {
   provider: LLMProvider
@@ -52,4 +53,6 @@ export interface ResolvedAgentConfig {
   origin?: 'sidepanel' | 'newtab'
   /** BrowserOS installation ID for credit-based tracking. */
   browserosId?: string
+  /** Selected Webruit companion, rendered into the system prompt. */
+  companion?: CompanionPromptInput
 }
