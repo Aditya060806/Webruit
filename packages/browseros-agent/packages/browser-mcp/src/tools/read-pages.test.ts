@@ -13,6 +13,7 @@ interface FakePage {
   url: string
   body?: string
   failOpen?: boolean
+  errorPage?: boolean
 }
 
 function fakeSession(pages: Record<string, FakePage>) {
@@ -39,7 +40,11 @@ function fakeSession(pages: Record<string, FakePage>) {
                 value:
                   expression === 'document.readyState'
                     ? 'complete'
-                    : (open.get(id)?.body ?? ''),
+                    : expression === 'location.href'
+                      ? open.get(id)?.errorPage
+                        ? 'chrome-error://chromewebdata/'
+                        : open.get(id)?.url
+                      : (open.get(id)?.body ?? ''),
               },
             }),
           },
@@ -105,6 +110,29 @@ describe('read_pages', () => {
     expect(pages.map((p) => p.ok)).toEqual([true, false, false])
     expect(textOf(result)).toContain('Only http and https URLs can be read.')
     expect(fake.openedUrls).not.toContain('file:///etc/x')
+  })
+
+  it("reports Chromium's network error page as a failure, with the error code", async () => {
+    const fake = fakeSession({
+      'https://gone.example': {
+        url: 'https://gone.example/',
+        errorPage: true,
+        body: "This site can't be reached\nERR_NAME_NOT_RESOLVED",
+      },
+    })
+    const result = await executeTool(
+      read_pages,
+      { urls: ['https://gone.example'] },
+      { session: fake.session },
+    )
+    const [page] = (result.structuredContent as { pages: { ok: boolean }[] })
+      .pages
+    expect(page.ok).toBe(false)
+    expect(textOf(result)).toContain(
+      'Page failed to load (ERR_NAME_NOT_RESOLVED).',
+    )
+    expect(textOf(result)).not.toContain("This site can't be reached")
+    expect(fake.open.size).toBe(0)
   })
 
   it('truncates long pages to maxCharsPerPage and says so', async () => {

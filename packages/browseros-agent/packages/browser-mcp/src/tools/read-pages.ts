@@ -95,6 +95,21 @@ async function readOne(
     }
 
     await waitForReady(evaluate, ctx.signal)
+    // Network failures render Chromium's own error page, which would otherwise read as real content.
+    const href = String((await evaluate('location.href')) ?? '')
+    if (href.startsWith('chrome-error://')) {
+      const body = String(
+        (await evaluate('document.body?.innerText ?? ""')) ?? '',
+      )
+      const code = body.match(/\bERR_[A-Z_]+\b/)?.[0]
+      return {
+        url,
+        ok: false,
+        error: `Page failed to load${code ? ` (${code})` : ''}.`,
+        contentLength: 0,
+        truncated: false,
+      }
+    }
     const text = String(
       (await evaluate(buildContentMarkdownExpression({}))) ?? '',
     )
