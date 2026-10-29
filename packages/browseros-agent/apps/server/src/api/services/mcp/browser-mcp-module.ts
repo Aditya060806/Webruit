@@ -145,7 +145,7 @@ export class BrowserMcpModule {
 
     const server = createBrowserMcpServer({
       name: 'browseros_mcp',
-      title: 'BrowserOS MCP server',
+      title: 'Webruit MCP server',
       version: this.deps.version,
       browserSession: this.deps.browserSession,
       defaultWindowId: lease?.browserContext?.windowId,

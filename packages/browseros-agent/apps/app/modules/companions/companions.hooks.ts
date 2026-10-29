@@ -14,7 +14,7 @@ import {
   selectedCompanionStorage,
 } from './selected-companion-storage'
 
-export const COMPANION_QUERY_KEYS = {
+const COMPANION_QUERY_KEYS = {
   all: (baseUrl: string | null | undefined) => ['companions', baseUrl] as const,
 }
 
@@ -22,7 +22,7 @@ function companionsClient(baseUrl: string) {
   return hc<CompanionRoutes>(`${baseUrl}/companions`)
 }
 
-export function useCompanions() {
+function useCompanions() {
   const {
     baseUrl,
     isLoading: urlLoading,
@@ -50,7 +50,7 @@ export function useCompanions() {
 }
 
 /** The selected id is shared by every extension surface (side panel, new tab) through extension storage. */
-export function useSelectedCompanionId() {
+function useSelectedCompanionId() {
   const [companionId, setCompanionIdState] = useState(DEFAULT_COMPANION_ID)
 
   useEffect(() => {

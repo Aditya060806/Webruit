@@ -44,14 +44,14 @@ const defaults: Record<ChatMode, StarterPrompt[]> = {
   ],
   agent: [
     {
-      display: 'Read about our vision and upvote',
+      display: 'Summarize the top story on Hacker News',
       prompt:
-        'Go to https://dub.sh/browseros-launch in current tab. Find and click the upvote button',
+        'Open news.ycombinator.com in current tab, open the top story and summarize it in five bullet points',
     },
     {
-      display: 'Support BrowserOS on Github',
+      display: 'Find a highly rated Italian restaurant nearby',
       prompt:
-        'Go to http://git.new/browseros in current tab and star the repository',
+        'Search Google Maps for highly rated Italian restaurants near me and list the top three with ratings',
     },
     {
       display: 'Open amazon.com and order Sensodyne toothpaste',

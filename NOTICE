@@ -1,0 +1,25 @@
+Webruit
+Copyright 2026 Webruit
+
+Webruit is a modified version of BrowserOS
+(https://github.com/browseros-ai/BrowserOS), forked at commit 43ded8d.
+BrowserOS is copyright its contributors and licensed under the GNU Affero
+General Public License v3.0 or later. Webruit is distributed under the same
+license; see LICENSE. The Chromium layer also carries the licenses in
+LICENSE.ungoogled_chromium and in the Chromium source tree.
+
+"BrowserOS" and its logo are names and marks of their owners. Webruit is not
+affiliated with or endorsed by the BrowserOS project.
+
+Modifications by Webruit (AGPL-3.0 section 5a), all under
+packages/browseros-agent:
+
+- 2026-10-29  Companions: named agent personas with their own starters,
+  effort level, preferred apps and limits (shared schema, server store and
+  API, system-prompt section, app picker and Companions page).
+- 2026-10-29  Rebrand: user-visible product name changed to Webruit, new logo
+  and extension icons, upstream promotional banners and starter prompts
+  removed.
+
+Internal identifiers that refer to the BrowserOS platform API (for example
+chrome.browserOS and BrowserOSAdapter) are unchanged.

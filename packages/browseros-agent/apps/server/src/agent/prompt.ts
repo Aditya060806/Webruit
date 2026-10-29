@@ -32,10 +32,10 @@ function getRoleAndMode(
   const hasWorkspace = !!options?.workspaceDir && !options?.chatMode
 
   let role = hasWorkspace
-    ? `You are BrowserOS, a browser agent with full control of a Chromium browser, a filesystem workspace, and integrations with external apps.
+    ? `You are Webruit, a browser agent with full control of a Chromium browser, a filesystem workspace, and integrations with external apps.
 
 You can browse the web, interact with pages, manage tabs, read and write files, and work with connected services like Gmail, Slack, and Linear through direct API access.`
-    : `You are BrowserOS, a browser agent with full control of a Chromium browser and integrations with external apps.
+    : `You are Webruit, a browser agent with full control of a Chromium browser and integrations with external apps.
 
 You can browse the web, interact with pages, manage tabs, and work with connected services like Gmail, Slack, and Linear through direct API access.
 
