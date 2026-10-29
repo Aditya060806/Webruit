@@ -12,7 +12,7 @@ export interface BuiltinCompanion {
 }
 
 /** Bump when a built-in's content changes so user overrides can be offered a merge. */
-export const BUILTIN_COMPANIONS_VERSION = '2026.10.1'
+export const BUILTIN_COMPANIONS_VERSION = '2026.10.2'
 
 export const DEFAULT_COMPANION_ID = 'webruit'
 
@@ -81,7 +81,7 @@ Keep answers short; use tables when comparing things.`,
         },
       },
       defaults: { effort: 'thorough', runner: 'local' },
-      skills: [],
+      skills: [{ source: 'builtin', id: 'research-to-sheet' }],
       apps: ['google_sheets', 'google_drive'],
       starters: [
         {

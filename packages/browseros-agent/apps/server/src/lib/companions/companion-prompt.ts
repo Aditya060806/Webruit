@@ -7,7 +7,9 @@
 import type {
   Companion,
   CompanionEffort,
+  CompanionSkillRef,
 } from '@browseros/shared/schemas/companion'
+import { getBuiltinSkill, type Skill } from '../skills/builtin-skills'
 
 /** The subset of a companion the prompt needs; kept narrow so sessions don't hold the whole record. */
 export type CompanionPromptInput = Pick<
@@ -18,6 +20,7 @@ export type CompanionPromptInput = Pick<
   | 'tagline'
   | 'persona'
   | 'apps'
+  | 'skills'
   | 'defaults'
   | 'policy'
   | 'origin'
@@ -45,10 +48,37 @@ const EFFORT_GUIDANCE: Record<CompanionEffort, string> = {
 function sanitizePersona(text: string): string {
   return text
     .replace(
-      /<\/?\s*(companion|persona|security|role|AGENT_PROMPT)[^>]*>/gi,
+      /<\/?\s*(companion|persona|skills?|security|role|AGENT_PROMPT)[^>]*>/gi,
       '',
     )
     .trim()
+}
+
+/** Built-in skills are looked up by id; inline ones are user-authored and sanitized like the persona. Unknown and workspace refs are skipped. */
+function resolveSkills(refs: CompanionSkillRef[] | undefined): Skill[] {
+  const skills: Skill[] = []
+  for (const ref of refs ?? []) {
+    if (ref.source === 'builtin') {
+      const skill = getBuiltinSkill(ref.id)
+      if (skill) skills.push(skill)
+    } else if (ref.source === 'inline' && ref.inline) {
+      skills.push({
+        id: ref.id,
+        name: sanitizePersona(ref.inline.name),
+        description: sanitizePersona(ref.inline.description),
+        body: sanitizePersona(ref.inline.body),
+      })
+    }
+  }
+  return skills
+}
+
+function renderSkills(skills: Skill[]): string {
+  const blocks = skills.map(
+    (skill) =>
+      `<skill id="${skill.id.replace(/["<>]/g, '')}" name="${skill.name.replace(/"/g, "'")}">\nWhen to use: ${skill.description}\n\n${skill.body}\n</skill>`,
+  )
+  return `<skills>\nPlaybooks for this companion. When a task matches a skill's "When to use", follow its steps; otherwise ignore it.\n\n${blocks.join('\n\n')}\n</skills>`
 }
 
 function list(values: string[] | undefined): string | null {
@@ -84,6 +114,9 @@ export function renderCompanionSection(
       `Preferred apps: ${apps}. When one of these is connected, use it instead of driving its website.`,
     )
   }
+
+  const skills = resolveSkills(companion.skills)
+  if (skills.length > 0) lines.push(renderSkills(skills))
 
   const { policy } = companion
   const limits: string[] = []

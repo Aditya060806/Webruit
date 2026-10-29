@@ -8,6 +8,7 @@ import { history } from './history'
 import { navigate } from './navigate'
 import { pdf } from './pdf'
 import { read } from './read'
+import { read_pages } from './read-pages'
 import { run } from './run'
 import { screenshot } from './screenshot'
 import { snapshot } from './snapshot'
@@ -28,6 +29,7 @@ export const BROWSER_TOOLS: readonly ToolDefinition[] = [
   download,
   upload,
   read,
+  read_pages,
   grep,
   screenshot,
   pdf,

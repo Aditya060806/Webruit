@@ -20,6 +20,9 @@ packages/browseros-agent:
 - 2026-10-29  Rebrand: user-visible product name changed to Webruit, new logo
   and extension icons, upstream promotional banners and starter prompts
   removed.
+- 2026-10-29  Research to Google Sheets: read_pages browser tool (reads
+  several URLs in background tabs), built-in companion skills with a
+  research-to-sheet playbook attached to the Atlas companion.
 
 Internal identifiers that refer to the BrowserOS platform API (for example
 chrome.browserOS and BrowserOSAdapter) are unchanged.
