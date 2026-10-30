@@ -40,6 +40,11 @@ export interface KlavisToolAdapterDeps {
 export interface KlavisMcpRegistrationOptions {
   /** Returns a user-facing rejection when the current MCP caller lacks authority. */
   authorizeCall?: () => string | undefined
+  /** Webruit permission check for one Strata call; may wait for the user's approval. */
+  authorizeToolCall?: (
+    toolName: string,
+    args: Record<string, unknown>,
+  ) => Promise<string | undefined>
 }
 
 type ConnectorToolPayload =
@@ -367,6 +372,13 @@ export function registerKlavisTools(
       async (args: Record<string, unknown>) => {
         const rejection = rejectUnauthorizedMcpCall(options)
         if (rejection) return rejection
+        const denial = await options.authorizeToolCall?.(strataTool.name, args)
+        if (denial) {
+          return {
+            content: [{ type: 'text' as const, text: denial }],
+            isError: true,
+          }
+        }
 
         const startTime = performance.now()
         const logBase = {

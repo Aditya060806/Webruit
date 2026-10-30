@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Palette,
   Server,
+  ShieldCheck,
 } from 'lucide-react'
 import type { FC } from 'react'
 import { NavLink } from 'react-router'
@@ -75,6 +76,7 @@ const primarySettingsSections: NavSection[] = [
         to: '/settings/customization',
         icon: Palette,
       },
+      { name: 'Permissions', to: '/settings/permissions', icon: ShieldCheck },
       { name: 'Webruit as MCP', to: '/settings/mcp', icon: Server },
     ],
   },

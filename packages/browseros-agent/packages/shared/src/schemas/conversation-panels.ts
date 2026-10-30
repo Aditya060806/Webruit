@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod'
+import { PendingApprovalSchema } from './permissions'
 
 export const ConversationRunStatusSchema = z.enum([
   'running',
@@ -55,6 +56,8 @@ export const ConversationPanelAssignmentsSchema = z.object({
   controls: z
     .array(z.object({ tabId: z.number().int(), control: TabControlSchema }))
     .optional(),
+  // Actions waiting for the user's approval. Omitted when empty.
+  approvals: z.array(PendingApprovalSchema).optional(),
 })
 
 export type ConversationRunStatus = z.infer<typeof ConversationRunStatusSchema>

@@ -9,7 +9,10 @@ import { openSidePanel } from './toggleSidePanel'
 
 /** Binds the broker's narrow effects to extension APIs in the background realm. */
 export function createConversationPanelBroker(
-  options: Pick<ConversationPanelBrokerDeps, 'applyTabControls'> = {},
+  options: Pick<
+    ConversationPanelBrokerDeps,
+    'applyTabControls' | 'applyApprovals'
+  > = {},
 ): ConversationPanelBroker {
   return new ConversationPanelBroker({
     ...options,

@@ -53,6 +53,8 @@ export interface BrowserToolCall {
   source: string
   trace: BrowserToolPageTrace
   tabGroups: Pick<ConversationTabGroups, 'addCreatedPages'>
+  /** Webruit permission check; runs after guards so blocked calls never prompt the user. */
+  authorize?: (call: BrowserToolCall) => Promise<ToolResult | null>
 }
 
 export interface BrowserToolEffectContext {
@@ -122,6 +124,12 @@ export async function dispatchBrowserTool(
   if (rejection) {
     await runObservers({ call, result: rejection, durationMs: durationMs() })
     return rejection
+  }
+
+  const denial = await call.authorize?.(call)
+  if (denial) {
+    await runObservers({ call, result: denial, durationMs: durationMs() })
+    return denial
   }
 
   try {

@@ -16,6 +16,7 @@ import { NewTabChat } from '@/screens/newtab/index/NewTabChat'
 import { NewTabLayout } from '@/screens/newtab/layout/NewTabLayout'
 import { Personalize } from '@/screens/newtab/personalize/Personalize'
 import { OnboardingAiPage } from '@/screens/onboarding-ai/OnboardingAiPage'
+import { PermissionsPage } from '@/screens/permissions/PermissionsPage'
 import { ScheduledTasksPage } from '@/screens/scheduled-tasks/ScheduledTasksPage'
 
 function getSurveyParams(): { maxTurns?: number; experimentId?: string } {
@@ -69,6 +70,7 @@ export const App: FC = () => {
             <Route path="ai" element={<AISettingsPage key="ai" />} />
             <Route path="chat" element={<LlmHubPage />} />
             <Route path="mcp" element={<MCPSettingsPage />} />
+            <Route path="permissions" element={<PermissionsPage />} />
             <Route path="customization" element={<CustomizationPage />} />
             <Route path="diagnostics" element={<DiagnosticsPage />} />
             <Route

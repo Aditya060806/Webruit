@@ -10,6 +10,10 @@ import type {
 } from '@browseros/shared/schemas/conversation-panels'
 import type { UIMessage, UIMessageChunk } from 'ai'
 import {
+  type ApprovalBroker,
+  approvalBroker,
+} from '../../lib/permissions/approval-broker'
+import {
   type TabControlRegistry,
   tabControl,
 } from '../../lib/tab-control/tab-control-registry'
@@ -105,6 +109,8 @@ interface ConversationRunsDeps {
   panelAssignmentsHeartbeatMs?: number
   /** Tabs the user holds; published with the panel table. Defaults to the process registry. */
   tabControl?: Pick<TabControlRegistry, 'list' | 'onChange' | 'handBack'>
+  /** Actions waiting for approval; published with the panel table. */
+  approvals?: Pick<ApprovalBroker, 'list' | 'onChange'>
 }
 
 export class ConversationRunAlreadyActiveError extends Error {
@@ -137,9 +143,13 @@ export class ConversationRuns {
     'list' | 'onChange' | 'handBack'
   >
 
+  private readonly approvals: Pick<ApprovalBroker, 'list' | 'onChange'>
+
   constructor(private readonly deps: ConversationRunsDeps = {}) {
     this.tabControl = deps.tabControl ?? tabControl
     this.tabControl.onChange(() => this.publishPanelAssignments())
+    this.approvals = deps.approvals ?? approvalBroker
+    this.approvals.onChange(() => this.publishPanelAssignments())
   }
 
   async start(
@@ -423,6 +433,7 @@ export class ConversationRuns {
 
   private currentPanelAssignments(): ConversationPanelAssignments {
     const controls = this.tabControl.list().sort((a, b) => a.tabId - b.tabId)
+    const approvals = this.approvals.list()
     return {
       assignments: [...this.panelByTab.entries()]
         .map(([tabId, record]) => ({
@@ -436,6 +447,7 @@ export class ConversationRuns {
         }))
         .sort((a, b) => a.tabId - b.tabId),
       ...(controls.length > 0 && { controls }),
+      ...(approvals.length > 0 && { approvals }),
     }
   }
 

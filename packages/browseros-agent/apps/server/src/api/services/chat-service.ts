@@ -856,6 +856,13 @@ export class ChatService {
       outputFileAccess,
       browserContext,
       source: 'chat',
+      permissions: agentConfig.companion
+        ? {
+            permissionMode: agentConfig.companion.defaults.permissionMode,
+            domainsAllow: agentConfig.companion.policy.domainsAllow,
+            domainsDeny: agentConfig.companion.policy.domainsDeny,
+          }
+        : undefined,
     })
     try {
       const agent = await AiSdkAgent.create({

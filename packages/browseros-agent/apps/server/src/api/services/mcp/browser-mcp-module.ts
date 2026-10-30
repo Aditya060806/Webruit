@@ -8,19 +8,29 @@ import type { BrowserSession } from '@browseros/browser-core/core/session'
 import { createBrowserMcpServer } from '@browseros/browser-mcp/mcp-server'
 import type { BrowserOutputFileAccess } from '@browseros/browser-mcp/output-file'
 import { BROWSER_TOOLS } from '@browseros/browser-mcp/registry'
-import type {
-  ToolContext,
-  ToolDefinition,
+import {
+  errorResult,
+  type ToolContext,
+  type ToolDefinition,
+  type ToolResult,
 } from '@browseros/browser-mcp/tools/framework'
 import { tabs } from '@browseros/browser-mcp/tools/tabs'
 import type { BrowserContext } from '@browseros/shared/schemas/browser-context'
 import { z } from 'zod/v4'
 import { logger } from '../../../lib/logger'
+import {
+  type LeasePermissions,
+  type PermissionGate,
+  permissionGate,
+} from '../../../lib/permissions/permission-gate'
 import { shouldLogToolRegistration } from '../../../tools/registration-log-sampling'
 import type { ConversationRuns } from '../conversation-runs'
 import type { KlavisService } from '../klavis'
 import type { ServerActivity } from '../server-activity'
-import { dispatchBrowserTool } from './browser-tool-dispatch'
+import {
+  type BrowserToolCall,
+  dispatchBrowserTool,
+} from './browser-tool-dispatch'
 import { ConversationTabGroups } from './conversation-tab-groups'
 import { MCP_INSTRUCTIONS } from './mcp-prompt'
 
@@ -33,6 +43,7 @@ export interface BrowserMcpModuleDeps {
   klavis?: KlavisService
   activity?: ServerActivity
   tabGroups?: Pick<ConversationTabGroups, 'addCreatedPages'>
+  permissionGate?: Pick<PermissionGate, 'check'>
 }
 
 export interface BrowserToolLeaseInput {
@@ -41,6 +52,8 @@ export interface BrowserToolLeaseInput {
   outputFileAccess: BrowserOutputFileAccess
   browserContext?: BrowserContext
   source?: string
+  /** Webruit: companion permission mode and site limits for this conversation. */
+  permissions?: LeasePermissions
 }
 
 /**
@@ -84,6 +97,15 @@ const READ_ONLY_BROWSER_TOOLS: readonly ToolDefinition[] = [
   ),
 ]
 
+/** Page facts only refine the risk preview; a missing one must never block the call. */
+function safely<T>(read: () => T): T | undefined {
+  try {
+    return read()
+  } catch {
+    return undefined
+  }
+}
+
 export class InvalidBrowserToolLeaseError extends Error {
   constructor() {
     super('Invalid or expired BrowserOS tool lease')
@@ -99,10 +121,12 @@ export class InvalidBrowserToolLeaseError extends Error {
 export class BrowserMcpModule {
   private readonly leases = new Map<string, LeaseRecord>()
   private readonly tabGroups: Pick<ConversationTabGroups, 'addCreatedPages'>
+  private readonly permissionGate: Pick<PermissionGate, 'check'>
 
   constructor(private readonly deps: BrowserMcpModuleDeps) {
     this.tabGroups =
       deps.tabGroups ?? new ConversationTabGroups(deps.browserSession)
+    this.permissionGate = deps.permissionGate ?? permissionGate
   }
 
   createLease(input: BrowserToolLeaseInput): BrowserToolLease {
@@ -182,6 +206,8 @@ export class BrowserMcpModule {
           }
           return undefined
         },
+        authorizeToolCall: (toolName, args) =>
+          this.authorizeConnectorCall(lease, toolName, args),
       },
     )
     return server
@@ -209,6 +235,50 @@ export class BrowserMcpModule {
       readOnly,
       source,
       tabGroups: this.tabGroups,
+      // External MCP clients (no lease) are the user's own agents; the policy covers Webruit's.
+      authorize: lease
+        ? (call) => this.authorizeBrowserCall(lease, call)
+        : undefined,
     })
+  }
+
+  private async authorizeBrowserCall(
+    lease: LeaseRecord,
+    call: BrowserToolCall,
+  ): Promise<ToolResult | null> {
+    const page = typeof call.args.page === 'number' ? call.args.page : undefined
+    const session = call.context.session
+    const result = await this.permissionGate.check(call.tool.name, call.args, {
+      conversationId: lease.conversationId,
+      unattended: call.run ? !call.run.panelsVisible : false,
+      permissions: lease.permissions,
+      signal: call.run?.signal,
+      pageUrl:
+        page === undefined
+          ? undefined
+          : safely(() => session.pages.getInfo(page)?.url),
+      refLabel:
+        page === undefined
+          ? undefined
+          : (ref) => safely(() => session.observe(page).lastRefs.get(ref)),
+    })
+    return result.allowed ? null : errorResult(result.message)
+  }
+
+  /** Strata connector calls skip the browser pipeline, so they get the same check here. */
+  private async authorizeConnectorCall(
+    lease: LeaseRecord | undefined,
+    toolName: string,
+    args: Record<string, unknown>,
+  ): Promise<string | undefined> {
+    if (!lease) return undefined
+    const run = this.deps.conversationRuns.activeRun(lease.conversationId)
+    const result = await this.permissionGate.check(toolName, args, {
+      conversationId: lease.conversationId,
+      unattended: run ? !run.panelsVisible : false,
+      permissions: lease.permissions,
+      signal: run?.signal,
+    })
+    return result.allowed ? undefined : result.message
   }
 }

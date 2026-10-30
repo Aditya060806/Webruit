@@ -163,6 +163,7 @@ export const UpdateCompanionInputSchema = z
 export type CompanionAvatar = z.infer<typeof CompanionAvatarSchema>
 export type CompanionStarter = z.infer<typeof CompanionStarterSchema>
 export type CompanionEffort = z.infer<typeof CompanionEffortSchema>
+export type PermissionModeId = z.infer<typeof PermissionModeIdSchema>
 export type CompanionSkillRef = z.infer<typeof CompanionSkillRefSchema>
 export type CompanionManifest = z.infer<typeof CompanionManifestSchema>
 export type Companion = z.infer<typeof CompanionSchema>

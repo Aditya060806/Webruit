@@ -26,6 +26,10 @@ export interface ConversationPanelBrokerDeps {
   applyTabControls?(
     controls: NonNullable<ConversationPanelAssignments['controls']>,
   ): void
+  /** Receives the actions waiting for approval from every panel-stream message. */
+  applyApprovals?(
+    approvals: NonNullable<ConversationPanelAssignments['approvals']>,
+  ): void
   reportError?(
     error: unknown,
     context: ConversationPanelBrokerErrorContext,
@@ -241,6 +245,7 @@ export class ConversationPanelBroker {
       const assignments = ConversationPanelAssignmentsSchema.safeParse(decoded)
       if (!assignments.success) continue
       this.deps.applyTabControls?.(assignments.data.controls ?? [])
+      this.deps.applyApprovals?.(assignments.data.approvals ?? [])
       await this.reconcile(assignments.data)
     }
   }

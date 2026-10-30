@@ -62,6 +62,10 @@
       "types": "./src/schemas/companion.ts",
       "default": "./src/schemas/companion.ts"
     },
+    "./schemas/permissions": {
+      "types": "./src/schemas/permissions.ts",
+      "default": "./src/schemas/permissions.ts"
+    },
     "./schemas/agent": {
       "types": "./src/schemas/agent.ts",
       "default": "./src/schemas/agent.ts"

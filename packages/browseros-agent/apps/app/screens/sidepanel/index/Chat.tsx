@@ -1,6 +1,7 @@
 import { Loader2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NoProviderNotice } from '@/components/chat/NoProviderNotice'
+import { ApprovalCards } from '@/components/permissions/ApprovalCards'
 import { createBrowserOSAction } from '@/lib/chat-actions/types'
 import {
   SIDEPANEL_AI_TRIGGERED_EVENT,
@@ -47,6 +48,7 @@ export const Chat = () => {
     hasAnyTarget,
     isSettled,
     sendBlocked,
+    conversationId,
   } = useChatSessionContext()
 
   const {
@@ -209,6 +211,8 @@ export const Chat = () => {
       </main>
 
       {isIncognito && <IncognitoNotice />}
+
+      <ApprovalCards conversationId={conversationId} />
 
       <ChatFooter
         mode={mode}

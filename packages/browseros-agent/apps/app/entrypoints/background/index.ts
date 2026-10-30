@@ -26,6 +26,7 @@ import { selectedTextStorage } from '@/lib/selected-text/selectedTextStorage'
 import { stopAgentStorage } from '@/lib/stop-agent/stop-agent-storage'
 import { handBackStorage } from '@/lib/tab-control/hand-back-storage'
 import { TabControlBridge } from '@/lib/tab-control/tab-control-bridge'
+import { applyPendingApprovals } from '@/modules/permissions/pending-approvals-storage'
 import { scheduledJobRuns } from './scheduledJobRuns'
 
 const RETIRED_STORAGE_KEYS = [
@@ -56,6 +57,7 @@ export default defineBackground(() => {
   })
   const conversationPanelBroker = createConversationPanelBroker({
     applyTabControls: (controls) => tabControlBridge.apply(controls),
+    applyApprovals: (approvals) => applyPendingApprovals(approvals),
   })
   void conversationPanelBroker.start()
 
