@@ -25,10 +25,15 @@ const REASON_TEXT: Record<TabControl['reason'], string> = {
   other: 'has control of this tab',
 }
 
-function blocked(control: TabControl, page: number | 'any'): ToolResult {
-  const where = page === 'any' ? 'a tab' : `page ${page}`
+function blocked(control: TabControl, page: number): ToolResult {
   return errorResult(
-    `${USER_HAS_CONTROL}: the user ${REASON_TEXT[control.reason]} (${where}). Don't read or act on it. Finish anything you can do elsewhere, then end your turn and say you'll continue when they hand control back. Don't retry this tab.`,
+    `${USER_HAS_CONTROL}: the user ${REASON_TEXT[control.reason]} (page ${page}). Don't read or act on it. Finish anything you can do elsewhere, then end your turn and say you'll continue when they hand control back. Don't retry this tab.`,
+  )
+}
+
+function runBlocked(): ToolResult {
+  return errorResult(
+    `${USER_HAS_CONTROL}: the user is driving a tab, and run can reach any page, so run is unavailable until they hand it back. Use the other browser tools on other pages instead.`,
   )
 }
 
@@ -45,8 +50,7 @@ export function guardUserControlCall(
 ): ToolResult | null {
   if (toolName === 'request_handoff') return null
   if (toolName === 'run') {
-    const held = registry.list()[0]
-    return held ? blocked(held.control, 'any') : null
+    return registry.hasUserControlledTabs() ? runBlocked() : null
   }
   if (typeof args.page !== 'number') return null
   const tabId = tabIdForPage(args.page)

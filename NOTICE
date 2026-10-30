@@ -23,6 +23,9 @@ packages/browseros-agent:
 - 2026-10-29  Research to Google Sheets: read_pages browser tool (reads
   several URLs in background tabs), built-in companion skills with a
   research-to-sheet playbook attached to the Atlas companion.
+- 2026-10-30  Take over / hand back: per-tab user control on the server
+  (blocks agent tools on held tabs), request_handoff tool, overlay bar with
+  Take over, Stop and Hand back, and an automatic follow-up on hand back.
 
 Internal identifiers that refer to the BrowserOS platform API (for example
 chrome.browserOS and BrowserOSAdapter) are unchanged.
