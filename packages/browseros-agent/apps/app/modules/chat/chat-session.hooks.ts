@@ -30,6 +30,7 @@ import { searchActionsStorage } from '@/lib/search-actions/searchActionsStorage'
 import { selectedTextStorage } from '@/lib/selected-text/selectedTextStorage'
 import { sentry } from '@/lib/sentry/sentry'
 import { stopAgentStorage } from '@/lib/stop-agent/stop-agent-storage'
+import { handBackStorage } from '@/lib/tab-control/hand-back-storage'
 import { selectedWorkspaceStorage } from '@/lib/workspace/workspace-storage'
 import { resolveAgentServerUrl } from '@/modules/browseros/agent-server-url.helpers'
 import { useAgentServerUrl } from '@/modules/browseros/agent-server-url.hooks'
@@ -63,6 +64,14 @@ import { useExecutionHistoryTracker } from './execution-history-tracker.hooks'
 import { PanelConversationAttachment } from './panel-conversation-attachment'
 import { toLlmProviderConfig } from './sidepanel-chat-targets'
 import { stripImageToolOutputs } from './tool-output-strip'
+
+const HAND_BACK_MESSAGES = {
+  take_over: "I'm done on that tab and handed it back. Please continue.",
+  sign_in: "I've signed in and handed the tab back. Please continue.",
+  captcha: "I've solved the CAPTCHA and handed the tab back. Please continue.",
+  confirm: "I've reviewed that step and handed the tab back. Please continue.",
+  other: "I'm done on that tab and handed it back. Please continue.",
+} as const
 
 const getLastMessageText = (messages: UIMessage[]) => {
   const lastMessage = messages[messages.length - 1]
@@ -974,6 +983,19 @@ export const useChatSession = (options?: ChatSessionOptions) => {
         track(GLOW_STOP_CLICKED_EVENT)
         stopAgentStorage.setValue(null)
       }
+    })
+    return () => unwatch()
+  }, [])
+
+  // Webruit: resume a conversation that was waiting on the user. sendMessage
+  // queues the text if a turn is still streaming.
+  const sendMessageRef = useRef(sendMessage)
+  sendMessageRef.current = sendMessage
+  useEffect(() => {
+    const unwatch = handBackStorage.watch((signal) => {
+      if (!signal || signal.conversationId !== conversationIdRef.current) return
+      void handBackStorage.setValue(null)
+      sendMessageRef.current({ text: HAND_BACK_MESSAGES[signal.reason] })
     })
     return () => unwatch()
   }, [])

@@ -11,6 +11,7 @@ import { sentry } from '@/lib/sentry/sentry'
 import { useAgentServerUrl } from '@/modules/browseros/agent-server-url.hooks'
 import {
   DEFAULT_COMPANION_ID,
+  selectedCompanionNameStorage,
   selectedCompanionStorage,
 } from './selected-companion-storage'
 
@@ -95,6 +96,10 @@ export function useSelectedCompanion() {
     companions.find((c) => c.id === companionId) ??
     companions.find((c) => c.id === DEFAULT_COMPANION_ID) ??
     null
+  const selectedName = selected?.name
+  useEffect(() => {
+    if (selectedName) void selectedCompanionNameStorage.setValue(selectedName)
+  }, [selectedName])
   return { companions, selected, setCompanionId, loading, error }
 }
 

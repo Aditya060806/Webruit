@@ -92,6 +92,7 @@ describe('BrowserMcpModule', () => {
       'history',
       'pdf',
       'read',
+      'request_handoff',
       'screenshot',
       'snapshot',
       'tabs',

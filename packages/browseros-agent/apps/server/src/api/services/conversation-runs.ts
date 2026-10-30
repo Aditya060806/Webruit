@@ -9,6 +9,10 @@ import type {
   ConversationRunStatus,
 } from '@browseros/shared/schemas/conversation-panels'
 import type { UIMessage, UIMessageChunk } from 'ai'
+import {
+  type TabControlRegistry,
+  tabControl,
+} from '../../lib/tab-control/tab-control-registry'
 
 export type { ConversationRunStatus } from '@browseros/shared/schemas/conversation-panels'
 
@@ -99,6 +103,8 @@ interface ConversationRunsDeps {
   activity?: ConversationRunActivity
   /** Lower values heal clients faster at the cost of more loopback traffic. */
   panelAssignmentsHeartbeatMs?: number
+  /** Tabs the user holds; published with the panel table. Defaults to the process registry. */
+  tabControl?: Pick<TabControlRegistry, 'list' | 'onChange' | 'handBack'>
 }
 
 export class ConversationRunAlreadyActiveError extends Error {
@@ -126,7 +132,15 @@ export class ConversationRuns {
   private readonly autoOpenByTab = new Map<number, string>()
   private readonly panelSubscribers = new Set<PanelAssignmentsSubscriber>()
 
-  constructor(private readonly deps: ConversationRunsDeps = {}) {}
+  private readonly tabControl: Pick<
+    TabControlRegistry,
+    'list' | 'onChange' | 'handBack'
+  >
+
+  constructor(private readonly deps: ConversationRunsDeps = {}) {
+    this.tabControl = deps.tabControl ?? tabControl
+    this.tabControl.onChange(() => this.publishPanelAssignments())
+  }
 
   async start(
     input: StartConversationRunInput,
@@ -402,11 +416,13 @@ export class ConversationRuns {
   }
 
   removePanelTab(tabId: number): void {
+    this.tabControl.handBack(tabId)
     this.autoOpenByTab.delete(tabId)
     if (this.panelByTab.delete(tabId)) this.publishPanelAssignments()
   }
 
   private currentPanelAssignments(): ConversationPanelAssignments {
+    const controls = this.tabControl.list().sort((a, b) => a.tabId - b.tabId)
     return {
       assignments: [...this.panelByTab.entries()]
         .map(([tabId, record]) => ({
@@ -419,6 +435,7 @@ export class ConversationRuns {
           }),
         }))
         .sort((a, b) => a.tabId - b.tabId),
+      ...(controls.length > 0 && { controls }),
     }
   }
 

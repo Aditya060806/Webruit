@@ -24,9 +24,11 @@ import { logger } from '../../../lib/logger'
 import type { ActiveConversationRun } from '../conversation-runs'
 import type { ConversationTabGroups } from './conversation-tab-groups'
 import { applyConversationTabs } from './effects/conversation-tabs'
+import { applyTabControl } from './effects/tab-control'
 import { applyTabGroups } from './effects/tab-groups'
 import { guardConversationRunning } from './guards/conversation-running'
 import { guardReadOnly } from './guards/read-only'
+import { guardUserControl } from './guards/user-control'
 import { observeToolTelemetry } from './observers/tool-telemetry'
 
 const BROWSER_TOOL_TIMEOUT_MS = 120_000
@@ -92,11 +94,13 @@ interface NamedToolObserver {
 const GUARDS: readonly NamedToolGuard[] = [
   { name: 'conversation-running', run: guardConversationRunning },
   { name: 'read-only', run: guardReadOnly },
+  { name: 'user-control', run: guardUserControl },
 ]
 
 const EFFECTS: readonly NamedToolEffect[] = [
   { name: 'conversation-tabs', run: applyConversationTabs },
   { name: 'tab-groups', run: applyTabGroups },
+  { name: 'tab-control', run: applyTabControl },
 ]
 
 const OBSERVERS: readonly NamedToolObserver[] = [

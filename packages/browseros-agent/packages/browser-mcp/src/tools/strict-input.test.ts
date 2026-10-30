@@ -62,6 +62,8 @@ function sampleFor(name: string): Record<string, unknown> {
       return { action: 'list' }
     case 'tab_groups':
       return { action: 'list' }
+    case 'request_handoff':
+      return { page: 1, reason: 'sign_in', message: 'Sign in' }
     case 'read_pages':
       return { urls: ['https://example.com'] }
     case 'history':

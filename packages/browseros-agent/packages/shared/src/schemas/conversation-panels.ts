@@ -13,6 +13,24 @@ export const ConversationRunStatusSchema = z.enum([
   'failed',
 ])
 
+/** Why the user, not the agent, is driving a tab. Webruit addition (2026). */
+export const TabControlReasonSchema = z.enum([
+  'take_over',
+  'sign_in',
+  'captcha',
+  'confirm',
+  'other',
+])
+
+/** Present only while the user holds a tab; the agent's page tools are blocked on it. */
+export const TabControlSchema = z.object({
+  mode: z.literal('user'),
+  reason: TabControlReasonSchema,
+  message: z.string().max(300).optional(),
+  conversationId: z.string().optional(),
+  since: z.string(),
+})
+
 /**
  * Maps one browser tab's side panel to the conversation run it should display.
  * The server owns this assignment so clients never infer it from tool output.
@@ -33,6 +51,10 @@ export const ConversationPanelAssignmentSchema = z.object({
  */
 export const ConversationPanelAssignmentsSchema = z.object({
   assignments: z.array(ConversationPanelAssignmentSchema),
+  // Tabs the user holds, whether or not a conversation owns them. Omitted when empty.
+  controls: z
+    .array(z.object({ tabId: z.number().int(), control: TabControlSchema }))
+    .optional(),
 })
 
 export type ConversationRunStatus = z.infer<typeof ConversationRunStatusSchema>
@@ -42,3 +64,5 @@ export type ConversationPanelAssignment = z.infer<
 export type ConversationPanelAssignments = z.infer<
   typeof ConversationPanelAssignmentsSchema
 >
+export type TabControlReason = z.infer<typeof TabControlReasonSchema>
+export type TabControl = z.infer<typeof TabControlSchema>

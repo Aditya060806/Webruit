@@ -33,6 +33,7 @@ import { createScheduledJobRunRoutes } from './scheduled-job-runs'
 import { createScheduledJobRoutes } from './scheduled-jobs'
 import { createShutdownRoute } from './shutdown'
 import { createStatusRoute } from './status'
+import { createTabControlRoutes } from './tab-control'
 
 interface CreateApiRoutesDeps {
   agentRoutes?: Hono<Env>
@@ -136,6 +137,7 @@ export function createApiRoutes(deps: CreateApiRoutesDeps) {
       .route('/acpx/probe', createAcpxProbeRoutes({ resourcesDir }))
       .route('/agents', resolvedAgentRoutes)
       .route('/companions', createCompanionRoutes())
+      .route('/tab-control', createTabControlRoutes())
       .route('/conversations', createConversationRoutes())
       .route('/providers', createProvidersRoutes())
       .route('/test-provider', createProviderRoutes({ browserosId }))

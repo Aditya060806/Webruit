@@ -7,3 +7,9 @@ export const selectedCompanionStorage = storage.defineItem<string>(
   'local:webruitSelectedCompanion',
   { fallback: DEFAULT_COMPANION_ID },
 )
+
+/** Display name of the selected companion, for page overlays that can't call the server. */
+export const selectedCompanionNameStorage = storage.defineItem<string>(
+  'local:webruitSelectedCompanionName',
+  { fallback: 'Webruit' },
+)

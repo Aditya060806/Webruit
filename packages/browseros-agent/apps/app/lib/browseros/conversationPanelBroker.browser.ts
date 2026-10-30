@@ -1,12 +1,18 @@
 import { firstRunConfettiShownStorage } from '@/lib/onboarding/onboardingStorage'
-import { ConversationPanelBroker } from './conversationPanelBroker'
+import {
+  ConversationPanelBroker,
+  type ConversationPanelBrokerDeps,
+} from './conversationPanelBroker'
 import { conversationPanelViewsStorage } from './conversationPanelStorage'
 import { getAgentServerUrl } from './helpers'
 import { openSidePanel } from './toggleSidePanel'
 
 /** Binds the broker's narrow effects to extension APIs in the background realm. */
-export function createConversationPanelBroker(): ConversationPanelBroker {
+export function createConversationPanelBroker(
+  options: Pick<ConversationPanelBrokerDeps, 'applyTabControls'> = {},
+): ConversationPanelBroker {
   return new ConversationPanelBroker({
+    ...options,
     resolveServerUrl: getAgentServerUrl,
     fetch: (input, init) => fetch(input, init),
     getTab: (tabId) => chrome.tabs.get(tabId),

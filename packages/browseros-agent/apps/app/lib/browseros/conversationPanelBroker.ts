@@ -22,6 +22,10 @@ export interface ConversationPanelBrokerDeps {
   sendGlow(tabId: number, message: GlowMessage): Promise<void> | void
   hasShownConfetti(): Promise<boolean>
   markConfettiShown(): Promise<void>
+  /** Receives the user-held tabs from every panel-stream message. */
+  applyTabControls?(
+    controls: NonNullable<ConversationPanelAssignments['controls']>,
+  ): void
   reportError?(
     error: unknown,
     context: ConversationPanelBrokerErrorContext,
@@ -235,7 +239,9 @@ export class ConversationPanelBroker {
         continue
       }
       const assignments = ConversationPanelAssignmentsSchema.safeParse(decoded)
-      if (assignments.success) await this.reconcile(assignments.data)
+      if (!assignments.success) continue
+      this.deps.applyTabControls?.(assignments.data.controls ?? [])
+      await this.reconcile(assignments.data)
     }
   }
 

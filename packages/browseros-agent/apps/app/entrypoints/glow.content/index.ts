@@ -1,18 +1,26 @@
+import type { TabControl } from '@browseros/shared/schemas/conversation-panels'
 import confetti from 'canvas-confetti'
 import {
   RuntimeMessageType,
   sendRuntimeMessage,
 } from '@/lib/messaging/runtime/runtimeMessages'
+import {
+  TAB_CONTROL_MESSAGE_TYPE,
+  type TabControlMessage,
+} from '@/lib/tab-control/tab-control-bridge'
+import { selectedCompanionNameStorage } from '@/modules/companions/selected-companion-storage'
+import { createAgentBar, hideUserBar, showUserBar } from './control-bar'
 import type { GlowMessage } from './GlowMessage'
 
 const GLOW_OVERLAY_ID = 'browseros-glow-overlay'
 const GLOW_STYLES_ID = 'browseros-glow-styles'
-const GLOW_STOP_BTN_ID = 'browseros-glow-stop-btn'
 
 const GLOW_THICKNESS = 1.0
 const GLOW_OPACITY = 0.6
 
 let activeConversationId: string | null = null
+// Webruit: set while the user holds this tab; the glow stays off until they hand back.
+let control: TabControl | null = null
 
 function injectStyles(): void {
   if (document.getElementById(GLOW_STYLES_ID)) {
@@ -53,11 +61,6 @@ function injectStyles(): void {
       to { opacity: ${GLOW_OPACITY}; }
     }
 
-    @keyframes browseros-glow-btn-fade-in {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
     #${GLOW_OVERLAY_ID} {
       position: fixed !important;
       top: 0 !important;
@@ -71,34 +74,6 @@ function injectStyles(): void {
       animation:
         browseros-glow-pulse 3s ease-in-out infinite,
         browseros-glow-fade-in 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-    }
-
-    #${GLOW_STOP_BTN_ID} {
-      position: fixed !important;
-      bottom: 24px !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      width: 48px !important;
-      height: 48px !important;
-      border-radius: 50% !important;
-      background: rgba(220, 38, 38, 0.95) !important;
-      color: white !important;
-      border: none !important;
-      pointer-events: auto !important;
-      cursor: pointer !important;
-      z-index: 2147483647 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      line-height: 1 !important;
-      padding: 0 !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-      opacity: 0;
-      animation: browseros-glow-btn-fade-in 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
-    }
-
-    #${GLOW_STOP_BTN_ID}:hover {
-      background: rgba(185, 28, 28, 1) !important;
     }
   `
   const appendStyle = () => document.head.appendChild(style)
@@ -117,19 +92,19 @@ function startGlow(): void {
   const overlay = document.createElement('div')
   overlay.id = GLOW_OVERLAY_ID
 
-  const button = document.createElement('button')
-  button.id = GLOW_STOP_BTN_ID
-  button.innerHTML =
-    '<svg width="16" height="16" viewBox="0 0 16 16" fill="white" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="14" height="14" rx="2"/></svg>'
-  button.addEventListener('click', () => {
-    if (activeConversationId) {
-      void sendRuntimeMessage(RuntimeMessageType.stopAgent, {
-        conversationId: activeConversationId,
-      })
-    }
+  const bar = createAgentBar({
+    companionName,
+    onTakeOver: (button) => void takeOver(button),
+    onStop: () => {
+      if (activeConversationId) {
+        void sendRuntimeMessage(RuntimeMessageType.stopAgent, {
+          conversationId: activeConversationId,
+        })
+      }
+    },
   })
 
-  overlay.appendChild(button)
+  overlay.appendChild(bar)
 
   const appendOverlay = () => document.body.appendChild(overlay)
 
@@ -193,12 +168,82 @@ function stopGlow(): void {
   }
 }
 
+let companionName = 'Webruit'
+
+/** Optimistic: the server blocks the agent before replying, so the bar can switch on success. */
+async function takeOver(button: HTMLButtonElement): Promise<void> {
+  button.disabled = true
+  const result = await sendRuntimeMessage(RuntimeMessageType.takeOverTab, {
+    conversationId: activeConversationId ?? undefined,
+  }).catch(() => ({ ok: false }))
+  button.disabled = false
+  if (!result.ok) return
+  applyControl({
+    mode: 'user',
+    reason: 'take_over',
+    ...(activeConversationId && { conversationId: activeConversationId }),
+    since: new Date().toISOString(),
+  })
+}
+
+async function handBack(button: HTMLButtonElement): Promise<void> {
+  button.disabled = true
+  const result = await sendRuntimeMessage(
+    RuntimeMessageType.handBackTab,
+    undefined,
+  ).catch(() => ({ ok: false }))
+  button.disabled = false
+  if (result.ok) applyControl(null)
+}
+
+function applyControl(next: TabControl | null): void {
+  control = next
+  if (control) {
+    stopGlow()
+    showUserBar(control, (button) => void handBack(button))
+    return
+  }
+  hideUserBar()
+  if (activeConversationId && !document.hidden) startGlow()
+}
+
+function isTabControlMessage(message: unknown): message is TabControlMessage {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    (message as { type?: unknown }).type === TAB_CONTROL_MESSAGE_TYPE
+  )
+}
+
 export default defineContentScript({
   matches: ['*://*/*'],
   runAt: 'document_start',
   main() {
+    void selectedCompanionNameStorage.getValue().then(
+      (name) => {
+        companionName = name
+      },
+      () => undefined,
+    )
+    selectedCompanionNameStorage.watch((name) => {
+      companionName = name ?? 'Webruit'
+    })
+
+    // Control outlives navigation (e.g. sign-in redirects), so each page load asks for it.
+    void sendRuntimeMessage(RuntimeMessageType.getTabControl, undefined).then(
+      (response) => {
+        if (response.control) applyControl(response.control)
+      },
+      () => undefined,
+    )
+
     browser.runtime.onMessage.addListener(
-      (message: GlowMessage, _sender, sendResponse) => {
+      (message: GlowMessage | TabControlMessage, _sender, sendResponse) => {
+        if (isTabControlMessage(message)) {
+          applyControl(message.control)
+          sendResponse({ success: true })
+          return true
+        }
         if (
           typeof message !== 'object' ||
           !('conversationId' in message) ||
@@ -209,7 +254,7 @@ export default defineContentScript({
 
         if (message.isActive) {
           activeConversationId = message.conversationId
-          startGlow()
+          if (!control) startGlow()
         } else if (message.conversationId === activeConversationId) {
           activeConversationId = null
           stopGlow()

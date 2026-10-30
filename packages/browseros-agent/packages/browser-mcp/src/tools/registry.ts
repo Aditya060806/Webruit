@@ -9,6 +9,7 @@ import { navigate } from './navigate'
 import { pdf } from './pdf'
 import { read } from './read'
 import { read_pages } from './read-pages'
+import { request_handoff } from './request-handoff'
 import { run } from './run'
 import { screenshot } from './screenshot'
 import { snapshot } from './snapshot'
@@ -30,6 +31,7 @@ export const BROWSER_TOOLS: readonly ToolDefinition[] = [
   upload,
   read,
   read_pages,
+  request_handoff,
   grep,
   screenshot,
   pdf,

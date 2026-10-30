@@ -24,6 +24,8 @@ import { onOpenSidePanelWithSearch } from '@/lib/messaging/sidepanel/openSidepan
 import { searchActionsStorage } from '@/lib/search-actions/searchActionsStorage'
 import { selectedTextStorage } from '@/lib/selected-text/selectedTextStorage'
 import { stopAgentStorage } from '@/lib/stop-agent/stop-agent-storage'
+import { handBackStorage } from '@/lib/tab-control/hand-back-storage'
+import { TabControlBridge } from '@/lib/tab-control/tab-control-bridge'
 import { scheduledJobRuns } from './scheduledJobRuns'
 
 const RETIRED_STORAGE_KEYS = [
@@ -45,7 +47,16 @@ export default defineBackground(() => {
   registerDiagnostics('browseros', getAgentServerUrl)
   // One background broker owns the long-lived server subscription and all
   // panel-routing effects; individual React panels can come and go freely.
-  const conversationPanelBroker = createConversationPanelBroker()
+  const tabControlBridge = new TabControlBridge({
+    resolveServerUrl: getAgentServerUrl,
+    fetch: (input, init) => fetch(input, init),
+    sendToTab: (tabId, message) => {
+      chrome.tabs.sendMessage(tabId, message).catch(() => undefined)
+    },
+  })
+  const conversationPanelBroker = createConversationPanelBroker({
+    applyTabControls: (controls) => tabControlBridge.apply(controls),
+  })
   void conversationPanelBroker.start()
 
   // Registration never opens a panel. Per-tab URLs let panels opened by the
@@ -110,6 +121,40 @@ export default defineBackground(() => {
 
   onRuntimeMessage(RuntimeMessageType.getTabId, ({ sender }) => {
     return { tabId: sender.tab?.id }
+  })
+
+  onRuntimeMessage(RuntimeMessageType.getTabControl, ({ sender }) => ({
+    control:
+      sender.tab?.id === undefined ? null : tabControlBridge.get(sender.tab.id),
+  }))
+
+  onRuntimeMessage(RuntimeMessageType.takeOverTab, async ({ data, sender }) => {
+    const tabId = sender.tab?.id
+    if (tabId === undefined) return { ok: false, error: 'No tab' }
+    try {
+      await tabControlBridge.takeOver(tabId, data.conversationId)
+      return { ok: true }
+    } catch (error) {
+      return { ok: false, error: String(error) }
+    }
+  })
+
+  onRuntimeMessage(RuntimeMessageType.handBackTab, async ({ sender }) => {
+    const tabId = sender.tab?.id
+    if (tabId === undefined) return { ok: false, error: 'No tab' }
+    try {
+      const released = await tabControlBridge.handBack(tabId)
+      if (released?.conversationId) {
+        await handBackStorage.setValue({
+          conversationId: released.conversationId,
+          reason: released.reason,
+          timestamp: Date.now(),
+        })
+      }
+      return { ok: true }
+    } catch (error) {
+      return { ok: false, error: String(error) }
+    }
   })
 
   onRuntimeMessage(RuntimeMessageType.stopAgent, async ({ data }) => {

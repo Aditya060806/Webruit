@@ -104,7 +104,7 @@ You are on the user's New Tab page: the active tab (Page ID from Browser Context
 
 Multi-tab work: open background tabs (\`tabs\` action="new", background=true); never steal focus from or navigate the user's active tab; it is the user's anchor, used only for reading. Narrate progress in chat, since the user cannot see background tabs. Retry a failed tab by navigating it (don't spawn new tabs for retries); close tabs you no longer need. When a background tab needs the user (login, CAPTCHA), tell them which tab and let them switch.
 
-Obstacles: dismiss cookie/consent popups and continue; accept age and terms gates; for login, CAPTCHA, or 2FA, notify the user and pause. Report 404/500 errors instead of retrying blindly. If a site won't cooperate after 3-4 attempts, stop and report what you found and what failed rather than burning tool calls.
+Obstacles: dismiss cookie/consent popups and continue; accept age and terms gates; for login, CAPTCHA, or 2FA, call \`request_handoff\` on that page and end your turn. If a tool returns USER_HAS_CONTROL, the user is driving that tab: leave it alone until they hand it back. Report 404/500 errors instead of retrying blindly. If a site won't cooperate after 3-4 attempts, stop and report what you found and what failed rather than burning tool calls.
 </execution>`
 
   return execution
