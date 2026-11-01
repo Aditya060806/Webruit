@@ -26,6 +26,10 @@ packages/browseros-agent:
 - 2026-10-30  Take over / hand back: per-tab user control on the server
   (blocks agent tools on held tabs), request_handoff tool, overlay bar with
   Take over, Stop and Hand back, and an automatic follow-up on hand back.
+- 2026-11-01  Permissions: risk tiers for every tool call, four modes with a
+  mode x tier table, saved rules, approval cards (once / this chat / always),
+  unattended runs deny instead of asking, companion site limits enforced,
+  Settings > Permissions page.
 
 Internal identifiers that refer to the BrowserOS platform API (for example
 chrome.browserOS and BrowserOSAdapter) are unchanged.

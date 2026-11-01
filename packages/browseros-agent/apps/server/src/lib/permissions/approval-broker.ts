@@ -14,12 +14,23 @@ export const APPROVAL_TIMEOUT_MS = 5 * 60_000
 
 type ApprovalInput = Omit<PendingApproval, 'id' | 'createdAt' | 'expiresAt'>
 
+/** The answer, plus who gave it: the user, the clock, or a stopped run. */
+export type ApprovalOutcome = ApprovalResponse & {
+  answeredBy: 'user' | 'timeout' | 'stopped'
+}
+
 interface Waiter {
   approval: PendingApproval
-  resolve: (response: ApprovalResponse) => void
+  resolve: (outcome: ApprovalOutcome) => void
 }
 
 type Listener = () => void
+
+const deny = (answeredBy: 'timeout' | 'stopped'): ApprovalOutcome => ({
+  decision: 'deny',
+  scope: 'once',
+  answeredBy,
+})
 
 /**
  * Holds actions waiting for the user. A tool call awaits `request`; the
@@ -38,7 +49,7 @@ export class ApprovalBroker {
   request(
     input: ApprovalInput,
     signal?: AbortSignal,
-  ): Promise<ApprovalResponse> {
+  ): Promise<ApprovalOutcome> {
     const now = Date.now()
     const approval: PendingApproval = {
       ...input,
@@ -46,18 +57,17 @@ export class ApprovalBroker {
       createdAt: new Date(now).toISOString(),
       expiresAt: new Date(now + this.timeoutMs).toISOString(),
     }
-    const denied: ApprovalResponse = { decision: 'deny', scope: 'once' }
-    if (signal?.aborted) return Promise.resolve(denied)
+    if (signal?.aborted) return Promise.resolve(deny('stopped'))
 
-    return new Promise<ApprovalResponse>((resolve) => {
-      const finish = (response: ApprovalResponse) => {
+    return new Promise<ApprovalOutcome>((resolve) => {
+      const finish = (outcome: ApprovalOutcome) => {
         clearTimeout(timer)
         signal?.removeEventListener('abort', onAbort)
         if (this.pending.delete(approval.id)) this.notify()
-        resolve(response)
+        resolve(outcome)
       }
-      const onAbort = () => finish(denied)
-      const timer = setTimeout(() => finish(denied), this.timeoutMs)
+      const onAbort = () => finish(deny('stopped'))
+      const timer = setTimeout(() => finish(deny('timeout')), this.timeoutMs)
       signal?.addEventListener('abort', onAbort, { once: true })
       this.pending.set(approval.id, { approval, resolve: finish })
       this.notify()
@@ -68,7 +78,7 @@ export class ApprovalBroker {
   respond(id: string, response: ApprovalResponse): PendingApproval | undefined {
     const waiter = this.pending.get(id)
     if (!waiter) return undefined
-    waiter.resolve(response)
+    waiter.resolve({ ...response, answeredBy: 'user' })
     return waiter.approval
   }
 

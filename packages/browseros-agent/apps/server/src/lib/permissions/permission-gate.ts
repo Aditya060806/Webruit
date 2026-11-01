@@ -6,7 +6,11 @@
 
 import type { PermissionModeId } from '@browseros/shared/schemas/companion'
 import { logger } from '../logger'
-import { type ApprovalBroker, approvalBroker } from './approval-broker'
+import {
+  type ApprovalBroker,
+  type ApprovalOutcome,
+  approvalBroker,
+} from './approval-broker'
 import { type PermissionsStore, permissionsStore } from './permissions-store'
 import { decide, ruleKey, type SiteLimits } from './policy'
 import { type ClassifyContext, classifyCall } from './risk-tiers'
@@ -29,6 +33,12 @@ export interface GateContext extends ClassifyContext {
 export type GateResult = { allowed: true } | { allowed: false; message: string }
 
 const ALLOWED: GateResult = { allowed: true }
+
+const DENIED_BY: Record<ApprovalOutcome['answeredBy'], string> = {
+  user: 'the user declined',
+  timeout: 'no one answered the approval request in time for',
+  stopped: 'the run was stopped while waiting for approval of',
+}
 
 export class PermissionGate {
   /** conversationId → rule keys the user allowed "for this chat". */
@@ -88,7 +98,7 @@ export class PermissionGate {
     if (response.decision === 'deny') {
       return {
         allowed: false,
-        message: `${PERMISSION_DENIED}: the user declined "${call.summary}". Don't retry it. Ask in chat if you need another way.`,
+        message: `${PERMISSION_DENIED}: ${DENIED_BY[response.answeredBy]} "${call.summary}". Don't retry it. Ask in chat if you need another way.`,
       }
     }
     if (response.scope === 'run' && ctx.conversationId) {
@@ -102,9 +112,7 @@ export class PermissionGate {
         action: call.action,
         tier: call.tier,
         decision: 'allow',
-        label: call.app
-          ? `${call.action ?? call.tool} on ${call.app}`
-          : (call.action ?? call.tool),
+        label: `${call.action ?? call.tool} (${call.tier.replaceAll('_', ' ')} or lower)${call.app ? ` on ${call.app}` : ''}`,
       })
     }
     return ALLOWED

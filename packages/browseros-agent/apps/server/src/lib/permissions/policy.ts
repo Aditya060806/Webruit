@@ -9,6 +9,8 @@ import {
   type PermissionRule,
   POLICY_MATRIX,
   type PolicyDecision,
+  type RiskTier,
+  RiskTierSchema,
 } from '@browseros/shared/schemas/permissions'
 import { type ClassifiedCall, hostOf } from './risk-tiers'
 
@@ -34,8 +36,11 @@ export interface PolicyResult {
 }
 
 /** The identity a saved or per-run approval applies to. */
-export function ruleKey(call: Pick<ClassifiedCall, 'tool' | 'app' | 'action'>) {
-  return [call.tool, call.app ?? '*', call.action ?? '*'].join('|')
+export function ruleKey(
+  call: Pick<ClassifiedCall, 'tool' | 'app' | 'action' | 'tier'>,
+) {
+  // The tier is part of the key so allowing a Send click doesn't allow a Delete click.
+  return [call.tool, call.app ?? '*', call.action ?? '*', call.tier].join('|')
 }
 
 function matchesDomain(host: string, pattern: string): boolean {
@@ -47,7 +52,16 @@ function matchesDomain(host: string, pattern: string): boolean {
   return host === p || host.endsWith(`.${p}`)
 }
 
-/** Most specific match wins: app+action, then app, then tool alone. */
+const TIER_RANK = Object.fromEntries(
+  RiskTierSchema.options.map((tier, index) => [tier, index]),
+) as Record<RiskTier, number>
+
+/**
+ * Most specific match wins: app+action, then app, then tool alone. An allow
+ * rule only covers actions up to the risk it was approved for, so approving a
+ * "Send" click never also approves a "Delete" click on the same site. Block
+ * rules cover every risk.
+ */
 function findRule(
   call: ClassifiedCall,
   rules: readonly PermissionRule[],
@@ -56,7 +70,9 @@ function findRule(
     (rule) =>
       rule.tool === call.tool &&
       (rule.app === undefined || rule.app === call.app) &&
-      (rule.action === undefined || rule.action === call.action),
+      (rule.action === undefined || rule.action === call.action) &&
+      (rule.decision === 'deny' ||
+        TIER_RANK[call.tier] <= TIER_RANK[rule.tier]),
   )
   const score = (rule: PermissionRule) =>
     (rule.app ? 2 : 0) + (rule.action ? 1 : 0)

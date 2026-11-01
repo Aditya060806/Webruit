@@ -156,10 +156,43 @@ describe('decide', () => {
     expect(decide({ ...base, mode: 'autopilot' }).decision).toBe('allow')
   })
 
-  it('honours this-chat approvals', () => {
+  it('honours this-chat approvals, but only for the same risk', () => {
     expect(
       decide({ ...base, runAllowances: new Set([ruleKey(send)]) }).decision,
     ).toBe('allow')
+    const del = classifyCall('act', { page: 1, kind: 'click', ref: 'e3' }, ctx)
+    expect(
+      decide({ ...base, call: del, runAllowances: new Set([ruleKey(send)]) })
+        .decision,
+    ).toBe('ask')
+  })
+
+  it('lets an allow rule cover lower risks but not higher ones; block rules cover all', () => {
+    const rule = (decision: 'allow' | 'deny'): PermissionRule => ({
+      id: decision,
+      tool: 'act',
+      app: 'mail.example.com',
+      action: 'click',
+      tier: 'send_message',
+      decision,
+      label: 'clicks',
+      createdAt: '2026-11-01T00:00:00.000Z',
+    })
+    const del = classifyCall('act', { page: 1, kind: 'click', ref: 'e3' }, ctx)
+    const plain = classifyCall(
+      'act',
+      { page: 1, kind: 'click', ref: 'e4' },
+      ctx,
+    )
+    const unattended = { ...base, unattended: true, rules: [rule('allow')] }
+    expect(decide(unattended).decision).toBe('allow')
+    expect(
+      decide({ ...unattended, call: plain, mode: 'strict' }).decision,
+    ).toBe('allow')
+    expect(decide({ ...unattended, call: del }).decision).toBe('deny')
+    expect(
+      decide({ ...base, call: plain, rules: [rule('deny')] }).decision,
+    ).toBe('deny')
   })
 
   it("enforces the companion's site limits on navigation", () => {
@@ -232,7 +265,11 @@ describe('ApprovalBroker', () => {
     const [approval] = broker.list()
     expect(approval?.summary).toBe('Click "Send"')
     broker.respond(approval?.id ?? '', { decision: 'allow', scope: 'once' })
-    expect(await pending).toEqual({ decision: 'allow', scope: 'once' })
+    expect(await pending).toEqual({
+      decision: 'allow',
+      scope: 'once',
+      answeredBy: 'user',
+    })
     expect(broker.list()).toEqual([])
     expect(changes).toBe(2)
   })
@@ -245,12 +282,18 @@ describe('ApprovalBroker', () => {
       summary: 'Pay',
       details: [],
     }
-    expect((await broker.request(input)).decision).toBe('deny')
+    expect(await broker.request(input)).toMatchObject({
+      decision: 'deny',
+      answeredBy: 'timeout',
+    })
 
     const controller = new AbortController()
     const waiting = new ApprovalBroker().request(input, controller.signal)
     controller.abort()
-    expect((await waiting).decision).toBe('deny')
+    expect(await waiting).toMatchObject({
+      decision: 'deny',
+      answeredBy: 'stopped',
+    })
   })
 })
 
@@ -258,6 +301,7 @@ describe('PermissionGate', () => {
   function gate(answer: {
     decision: 'allow' | 'deny'
     scope: 'once' | 'run' | 'always'
+    answeredBy?: 'user' | 'timeout' | 'stopped'
   }) {
     const store = new PermissionsStore(join(root, 'p.json'))
     const asked: string[] = []
@@ -266,7 +310,7 @@ describe('PermissionGate', () => {
       broker: {
         request: async (approval) => {
           asked.push(approval.summary)
-          return answer
+          return { answeredBy: 'user' as const, ...answer }
         },
       },
     })
@@ -294,6 +338,20 @@ describe('PermissionGate', () => {
       action: 'click',
       decision: 'allow',
     })
+  })
+
+  it('says when no one answered instead of claiming the user declined', async () => {
+    const { g } = gate({
+      decision: 'deny',
+      scope: 'once',
+      answeredBy: 'timeout',
+    })
+    const result = await g.check('act', sendArgs, gateCtx)
+    expect(result.allowed).toBe(false)
+    if (!result.allowed) {
+      expect(result.message).toContain('no one answered')
+      expect(result.message).not.toContain('user declined')
+    }
   })
 
   it('reports a decline to the agent without retry hints', async () => {
