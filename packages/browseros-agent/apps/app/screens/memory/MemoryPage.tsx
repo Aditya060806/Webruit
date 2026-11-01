@@ -160,9 +160,11 @@ export const MemoryPage: FC = () => {
       </section>
 
       <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-base">Saved notes</h3>
-          <div className="relative ml-auto w-64">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="whitespace-nowrap font-semibold text-base">
+            Saved notes
+          </h3>
+          <div className="relative w-full sm:ml-auto sm:w-64">
             <Search className="absolute top-2.5 left-2 size-4 text-muted-foreground" />
             <Input
               value={query}

@@ -30,6 +30,8 @@ packages/browseros-agent:
   mode x tier table, saved rules, approval cards (once / this chat / always),
   unattended runs deny instead of asking, companion site limits enforced,
   Settings > Permissions page.
+- 2026-11-01  Memory: short notes about the user stored as Markdown files,
+  keyword recall added to each turn, memory tools for the agent, Memory page.
 
 Internal identifiers that refer to the BrowserOS platform API (for example
 chrome.browserOS and BrowserOSAdapter) are unchanged.
