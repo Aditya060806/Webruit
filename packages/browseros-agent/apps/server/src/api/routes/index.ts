@@ -25,6 +25,7 @@ import { createHealthRoute } from './health'
 import { createKlavisRoutes } from './klavis'
 import { createMcpRoutes } from './mcp'
 import { createMcpManagerRoutes } from './mcp-manager'
+import { createMemoryRoutes } from './memory'
 import { createOAuthRoutes } from './oauth'
 import { createPermissionsRoutes } from './permissions'
 import { createProviderRoutes } from './provider'
@@ -140,6 +141,7 @@ export function createApiRoutes(deps: CreateApiRoutesDeps) {
       .route('/companions', createCompanionRoutes())
       .route('/tab-control', createTabControlRoutes())
       .route('/permissions', createPermissionsRoutes())
+      .route('/memory', createMemoryRoutes())
       .route('/conversations', createConversationRoutes())
       .route('/providers', createProvidersRoutes())
       .route('/test-provider', createProviderRoutes({ browserosId }))

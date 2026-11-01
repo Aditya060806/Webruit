@@ -1,4 +1,11 @@
-import { CalendarClock, Home, PlugZap, Settings, Users } from 'lucide-react'
+import {
+  Brain,
+  CalendarClock,
+  Home,
+  PlugZap,
+  Settings,
+  Users,
+} from 'lucide-react'
 import type { FC } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import {
@@ -24,6 +31,7 @@ type NavItem = {
 const primaryNavItems: NavItem[] = [
   { name: 'Home', to: '/home', icon: Home },
   { name: 'Companions', to: '/companions', icon: Users },
+  { name: 'Memory', to: '/memory', icon: Brain },
   {
     name: 'Connect Apps',
     to: '/connect-apps',

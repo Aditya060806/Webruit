@@ -28,6 +28,7 @@ import {
   buildMcpServerSpecs,
   createMcpClients,
 } from './mcp-builder'
+import { buildMemoryToolSet } from './memory-tools'
 import {
   getMessageNormalizationOptions,
   normalizeMessagesForModel,
@@ -274,6 +275,10 @@ export class AiSdkAgent {
         ...externalMcpTools,
         ...filesystemTools,
         ...buildNudgeToolSet(),
+        ...buildMemoryToolSet({
+          conversationId: config.resolvedConfig.conversationId,
+          companionId: config.resolvedConfig.companion?.id,
+        }),
       }
 
       if (

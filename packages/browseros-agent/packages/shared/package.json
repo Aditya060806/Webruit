@@ -66,6 +66,10 @@
       "types": "./src/schemas/permissions.ts",
       "default": "./src/schemas/permissions.ts"
     },
+    "./schemas/memory": {
+      "types": "./src/schemas/memory.ts",
+      "default": "./src/schemas/memory.ts"
+    },
     "./schemas/agent": {
       "types": "./src/schemas/agent.ts",
       "default": "./src/schemas/agent.ts"

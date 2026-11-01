@@ -43,6 +43,8 @@ import {
   type SaveConversationInput,
 } from '../../lib/conversations/conversation-store'
 import { logger } from '../../lib/logger'
+import { buildRecallBlock } from '../../lib/memory/memory-search'
+import { type MemoryStore, memoryStore } from '../../lib/memory/memory-store'
 import type { KlavisService } from '../services/klavis'
 import type {
   BrowserMcpModule,
@@ -88,6 +90,7 @@ export interface ChatServiceDeps {
 
 export class ChatService {
   private readonly companionStore = new CompanionStore()
+  private readonly memoryStore: Pick<MemoryStore, 'list'> = memoryStore
   private acpAgentStore: Pick<AcpAgentStore, 'get'> | undefined
   private acpRuntime: Pick<AcpAgentRuntime, 'stream' | 'close'> | undefined
   private readonly acpMessages = new Map<string, UIMessage[]>()
@@ -181,6 +184,25 @@ export class ChatService {
 
   async stop(conversationId: string): Promise<boolean> {
     return await this.conversationRuns.stop(conversationId)
+  }
+
+  /** Memory problems must never block a chat turn. */
+  private async recallMemory(
+    message: string,
+    companionId: string,
+  ): Promise<string> {
+    try {
+      return buildRecallBlock(
+        await this.memoryStore.list(),
+        message,
+        companionId,
+      )
+    } catch (error) {
+      logger.warn('Memory recall failed', {
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return ''
+    }
   }
 
   subscribePanelAssignments() {
@@ -441,7 +463,9 @@ export class ChatService {
     // does.
     const messagesBeforeTurn = [...session.agent.messages]
     session.agent.appendUserMessage(request.message)
-    const promptUserText = contextPrefix + userContent
+    // Webruit: notes matching this message ride along in the transient prompt copy only.
+    const memoryBlock = await this.recallMemory(request.message, companion.id)
+    const promptUserText = contextPrefix + memoryBlock + userContent
     const wrappedUserMessageId =
       session.agent.messages[session.agent.messages.length - 1]?.id
 
